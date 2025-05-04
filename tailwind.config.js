@@ -4,5 +4,10 @@ export default {
   theme: {
     extend: {},
   },
+  safelist: [
+    {
+      pattern: /aspect-\[\d+\/\d+\]/, // aspect-[4/3] などを許可
+    },
+  ],
   plugins: [],
 };

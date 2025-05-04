@@ -5,7 +5,7 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
   const canvasRef = useRef(null);
   const [photoTaken, setPhotoTaken] = useState(false);
   const [photoUrl, setPhotoUrl] = useState(null);
-  const [photoCount, setPhotoCount] = useState(0); // ✅ 撮影回数を保持
+  const [photoCount, setPhotoCount] = useState(0);
 
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
@@ -20,18 +20,36 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
     const video = videoRef.current;
     const context = canvas.getContext("2d");
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // 実際に表示されているサイズに合わせてcanvasを設定
+    const rect = video.getBoundingClientRect();
 
-    setPhotoUrl(canvas.toDataURL("image/png"));
-    setPhotoTaken(true);
-    setPhotoCount((prev) => prev + 1); // ✅ 撮影回数を増やす
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+
+    // ピクセル密度対応（Retinaなど）
+    context.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+    // 映像を描画
+    context.drawImage(video, 0, 0, rect.width, rect.height);
+
+    // フレームを描画
+    const frameImage = new Image();
+    frameImage.src = frameSrc;
+    frameImage.onload = () => {
+      context.drawImage(frameImage, 0, 0, rect.width, rect.height);
+      setPhotoUrl(canvas.toDataURL("image/png"));
+      setPhotoTaken(true);
+      setPhotoCount((prev) => prev + 1);
+    };
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 ">
+    <div className="w-full max-w-2xl mx-auto p-4">
+      {/* プレビュー領域 */}
       <div className="relative w-full aspect-video overflow-hidden">
+        {/* カメラ映像 */}
         <video
           ref={videoRef}
           autoPlay
@@ -40,17 +58,23 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
             photoTaken ? "hidden" : ""
           }`}
         />
+
+        {/* 撮影済みcanvas */}
         <canvas
           ref={canvasRef}
           className={`absolute inset-0 w-full h-full object-contain z-0 ${
             photoTaken ? "" : "hidden"
           }`}
         />
-        <img
-          src={frameSrc}
-          alt="Selected Frame"
-          className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
-        />
+
+        {/* ✅ フレーム画像：プレビュー時のみ表示（2重防止） */}
+        {!photoTaken && (
+          <img
+            src={frameSrc}
+            alt="Selected Frame"
+            className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
+          />
+        )}
       </div>
 
       {/* ボタン類 */}
@@ -98,10 +122,10 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
         )}
       </div>
 
-      {/* ✅ 撮影回数の表示 */}
+      {/* 撮影回数 */}
       {photoTaken && (
         <p className="text-sm text-gray-700 mt-2">
-          {photoCount}回目の撮影! 絆が深まった
+          {photoCount}回目の撮影！ 絆が深まった📸
         </p>
       )}
     </div>
