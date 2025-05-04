@@ -3,7 +3,10 @@ import CameraFrame from "./components/CameraFrame";
 import FrameSelector from "./components/FrameSelector";
 
 function App() {
-  const [selectedFrame, setSelectedFrame] = useState("/frames/frame0.png");
+  const base = import.meta.env.BASE_URL;
+  const [selectedFrame, setSelectedFrame] = useState(
+    `${base}frames/frame0.png`
+  );
   const [showSelector, setShowSelector] = useState(false);
 
   return (

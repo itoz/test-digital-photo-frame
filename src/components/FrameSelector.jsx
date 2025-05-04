@@ -1,5 +1,6 @@
 export default function FrameSelector({ onSelect }) {
-  const frames = ["/frames/frame0.png", "/frames/frame1.png"];
+  const base = import.meta.env.BASE_URL;
+  const frames = [`${base}frames/frame0.png`, `${base}frames/frame1.png`];
 
   return (
     <div className="flex justify-center gap-4 flex-wrap">
