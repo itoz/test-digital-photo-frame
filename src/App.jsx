@@ -10,9 +10,9 @@ function App() {
   const [showSelector, setShowSelector] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-100  text-center p-4">
-      <h1 className="text-2xl font-bold mb-4 text-gray-900 ">
-        デジタルフォトフレーム3
+    <div className="h-screen text-center flex flex-col">
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 p-2 ">
+        デジタルフォトフレーム4
       </h1>
 
       <CameraFrame
