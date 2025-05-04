@@ -6,35 +6,41 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
   const [photoTaken, setPhotoTaken] = useState(false);
   const [photoUrl, setPhotoUrl] = useState(null);
   const [photoCount, setPhotoCount] = useState(0);
-
   useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    });
+    startCamera(); // 初回起動
   }, []);
+  const startCamera = () => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
 
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current.play().catch((err) => {
+              console.error("Video play failed:", err);
+            });
+          };
+        }
+      })
+      .catch((err) => {
+        console.error("Camera access denied:", err);
+      });
+  };
   const takePhoto = () => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
     const context = canvas.getContext("2d");
 
-    // 実際に表示されているサイズに合わせてcanvasを設定
     const rect = video.getBoundingClientRect();
-
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
     canvas.width = rect.width * window.devicePixelRatio;
     canvas.height = rect.height * window.devicePixelRatio;
 
-    // ピクセル密度対応（Retinaなど）
     context.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-    // 映像を描画
     context.drawImage(video, 0, 0, rect.width, rect.height);
 
-    // フレームを描画
     const frameImage = new Image();
     frameImage.src = frameSrc;
     frameImage.onload = () => {
@@ -50,34 +56,39 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
       {/* プレビュー領域 */}
       <div className="relative w-full aspect-video overflow-hidden">
         {/* カメラ映像 */}
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          className={`absolute inset-0 w-full h-full object-contain z-0 ${
-            photoTaken ? "hidden" : ""
-          }`}
-        />
+        {!photoTaken && (
+          <video
+            key={String(photoTaken)} // ← 毎回再マウントされる
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="absolute inset-0 w-full h-full object-contain z-0"
+          />
+        )}
 
-        {/* 撮影済みcanvas */}
-        <canvas
-          ref={canvasRef}
-          className={`absolute inset-0 w-full h-full object-contain z-0 ${
-            photoTaken ? "" : "hidden"
-          }`}
-        />
+        {/* 合成用 canvas（非表示） */}
+        <canvas ref={canvasRef} className="hidden" />
 
-        {/* ✅ フレーム画像：プレビュー時のみ表示（2重防止） */}
+        {/* 撮影後の画像（canvasと同じ位置） */}
+        {photoTaken && (
+          <img
+            src={photoUrl}
+            alt="撮影結果"
+            className="absolute inset-0 w-full h-full object-contain z-0"
+          />
+        )}
+
+        {/* フレーム（常に上に表示）※プレビュー中のみ */}
         {!photoTaken && (
           <img
             src={frameSrc}
-            alt="Selected Frame"
+            alt="Frame"
             className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
           />
         )}
       </div>
 
-      {/* ボタン類 */}
+      {/* ボタン */}
       <div className="flex justify-center mt-4 space-x-4">
         {!photoTaken ? (
           <>
@@ -100,24 +111,15 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
               onClick={() => {
                 setPhotoTaken(false);
                 setPhotoUrl(null);
+                startCamera(); // ← 再度カメラ接続！
               }}
               className="bg-gray-400 text-white px-4 py-2 rounded shadow hover:bg-gray-500"
             >
               とりなおす
             </button>
-            <a
-              href={photoUrl}
-              download="photo.png"
-              onClick={() => {
-                setTimeout(() => {
-                  setPhotoTaken(false);
-                  setPhotoUrl(null);
-                }, 0);
-              }}
-              className="bg-green-500 text-white px-4 py-2 rounded shadow hover:bg-green-600"
-            >
-              💾 保存
-            </a>
+            <p className="text-sm text-gray-500 mt-2 text-center">
+              📱 長押し or 右クリックで保存してください
+            </p>
           </>
         )}
       </div>
