@@ -12,7 +12,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100  text-center p-4">
       <h1 className="text-2xl font-bold mb-4 text-gray-900 ">
-        デジタルフォトフレーム1
+        デジタルフォトフレーム2
       </h1>
 
       <CameraFrame
