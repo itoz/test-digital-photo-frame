@@ -32,19 +32,25 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
     const video = videoRef.current;
     const context = canvas.getContext("2d");
 
-    const rect = video.getBoundingClientRect();
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
+    // ✅ 実際の映像サイズを使う（これが重要）
+    const width = video.videoWidth;
+    const height = video.videoHeight;
 
-    context.scale(window.devicePixelRatio, window.devicePixelRatio);
-    context.drawImage(video, 0, 0, rect.width, rect.height);
+    // ✅ ピクセルサイズ
+    canvas.width = width;
+    canvas.height = height;
+
+    // ✅ 見た目サイズ（CSS）※任意（必要なら）
+    canvas.style.width = "100%";
+    canvas.style.height = "auto";
+
+    // ✅ そのまま描画（scale 不要）
+    context.drawImage(video, 0, 0, width, height);
 
     const frameImage = new Image();
     frameImage.src = frameSrc;
     frameImage.onload = () => {
-      context.drawImage(frameImage, 0, 0, rect.width, rect.height);
+      context.drawImage(frameImage, 0, 0, width, height);
       setPhotoUrl(canvas.toDataURL("image/png"));
       setPhotoTaken(true);
       setPhotoCount((prev) => prev + 1);
