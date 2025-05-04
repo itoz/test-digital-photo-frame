@@ -58,7 +58,7 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4">
+    <div className="w-full mx-auto p-4">
       {/* プレビュー領域 */}
       <div className="relative w-full aspect-video overflow-hidden">
         {/* カメラ映像 */}
