@@ -6,6 +6,7 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
   const [photoTaken, setPhotoTaken] = useState(false);
   const [photoUrl, setPhotoUrl] = useState(null);
   const [photoCount, setPhotoCount] = useState(0);
+
   useEffect(() => {
     startCamera(); // 初回起動
   }, []);
@@ -50,7 +51,39 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
     const frameImage = new Image();
     frameImage.src = frameSrc;
     frameImage.onload = () => {
-      context.drawImage(frameImage, 0, 0, width, height);
+      // カメラ画像のサイズ
+      const targetW = canvas.width;
+      const targetH = canvas.height;
+
+      const frameW = frameImage.width;
+      const frameH = frameImage.height;
+
+      const frameAspect = frameW / frameH;
+      const targetAspect = targetW / targetH;
+
+      let drawWidth, drawHeight, offsetX, offsetY;
+
+      if (frameAspect > targetAspect) {
+        // フレームの方が横長 → 幅に合わせて高さ縮める
+        drawWidth = targetW;
+        drawHeight = targetW / frameAspect;
+        offsetX = 0;
+        offsetY = (targetH - drawHeight) / 2;
+      } else {
+        // フレームの方が縦長 → 高さに合わせて幅縮める
+        drawHeight = targetH;
+        drawWidth = targetH * frameAspect;
+        offsetY = 0;
+        offsetX = (targetW - drawWidth) / 2;
+      }
+
+      // 📷 映像を描画（すでに行っている前提）
+      // context.drawImage(video, 0, 0, targetW, targetH);
+
+      // 🖼 フレーム画像を比率を保って中央に描画
+      context.drawImage(frameImage, offsetX, offsetY, drawWidth, drawHeight);
+
+      // ✅ 完了
       setPhotoUrl(canvas.toDataURL("image/png"));
       setPhotoTaken(true);
       setPhotoCount((prev) => prev + 1);
@@ -112,7 +145,13 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
             </button>
           </>
         ) : (
-          <>
+          <div div className="flex flex-col items-center">
+            <p className="text-sm text-gray-700 mt-2">
+              {photoCount}回目の撮影！ 絆が深まった📸
+            </p>
+            <p className="text-sm text-gray-500 my-3 text-center">
+              長押し or 右クリックで保存してください
+            </p>
             <button
               onClick={() => {
                 setPhotoTaken(false);
@@ -123,19 +162,9 @@ export default function CameraFrame({ frameSrc, onOpenFrameSelector }) {
             >
               とりなおす
             </button>
-            <p className="text-sm text-gray-500 mt-2 text-center">
-              📱 長押し or 右クリックで保存してください
-            </p>
-          </>
+          </div>
         )}
       </div>
-
-      {/* 撮影回数 */}
-      {photoTaken && (
-        <p className="text-sm text-gray-700 mt-2">
-          {photoCount}回目の撮影！ 絆が深まった📸
-        </p>
-      )}
     </div>
   );
 }
